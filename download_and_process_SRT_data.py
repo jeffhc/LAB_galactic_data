@@ -31,17 +31,30 @@ deviance_from_variance = 2.5
 final_max_vels = []
 
 for val in l:
-	# Percent standard deviations starting from largest velocity index minus clearance threshhold in descending order.
 	variances = []
 	fluxes = [i[1] for i in final_LAB_data[val]]
-	for n in range(len(fluxes)-clearance_threshhold, 0, -1):
-		variances.append([
-			final_LAB_data[val][n][0], 						# Velocity
-			final_LAB_data[val][n][1], 						# Flux
-			statistics.variance(fluxes[n:len(fluxes)]) 		# Cumulative variance at a given velocity
-		])
+	if '-' not in val:
+		# For positive longitudes, percent standard deviations starting from 
+		# largest positive velocity index minus clearance threshhold in descending order.
+		# This finds RIGHTMOST maximum velocity.
+		for n in range(len(fluxes)-clearance_threshhold, 0, -1):
+			variances.append([
+				final_LAB_data[val][n][0], 						# Velocity
+				final_LAB_data[val][n][1], 						# Flux
+				statistics.variance(fluxes[n:len(fluxes)]) 		# Cumulative variance at a given velocity
+			])
+	else:
+		# For negative longitudes, percent standard deviations starting from 
+		# largest negative velocity index plus clearance threshhold in ascending order.
+		# This finds LEFTMOST maximum velocity.
+		for n in range(clearance_threshhold, len(fluxes)):
+			variances.append([
+				final_LAB_data[val][n][0], 						# Velocity
+				final_LAB_data[val][n][1], 						# Flux
+				statistics.variance(fluxes[0:n]) 				# Cumulative variance at a given velocity
+			])
 
-	# Max vel is found by finding first velocity from the right whose difference from the flux
+	# Max vel is found by finding first velocity from the left/right whose difference from the flux
 	# is greater than the deviation from variance.
 	max_vel = None
 	for n in range(len(variances)):
